@@ -54,18 +54,30 @@ void detect_I2C() {
       
       if (address == 0x1E) {
         Serial.println("@ magnetometre-HMC5883");
+        lcd.clear();
+        lcd.print("magnetometre-HMC5883");
+        delay(1000);
       }
       
       if (address == 0x27) {
         Serial.println("@ ecran-LCD1602");
+        lcd.clear();
+        lcd.print("ecran-LCD1602");
+        delay(1000);
       }
       
       if (address == 0x29) {
         Serial.println("@ couleur-TCS34725");
+        lcd.clear();
+        lcd.print("couleur-TCS34725");
+        delay(1000);
       }
       
       if (address == 0x68) {
         Serial.println("@ gyroscope-MPU6050");
+        lcd.clear();
+        lcd.print("gyroscope-MPU6050");
+        delay(1000);
       }
       
     } else if (error == 4) {
@@ -87,40 +99,5 @@ void loop() {
 
   detect_I2C();
 
-  Wire.beginTransmission(5);
-  Wire.write(0);
-  Wire.endTransmission();
-
-  read();
-  read();
-    
-  delay(1000);
-
-  Wire.beginTransmission(5);
-  Wire.write(3);
-  Wire.endTransmission();
-
-  read();
-  read();
-  read();
-  read();
-  read();
-  read();
-    
   delay(1000);
 }
-
-void read() {
-  int i2c;
-  char buf[8];
-
-  Wire.requestFrom(5, 1); // request 1 byte from slave device address 4
-  i2c = Wire.read();
-
-  sprintf(buf,"i2c #5: %i",i2c);
-  Serial.println(buf);
-  lcd.clear();
-  lcd.print(buf);
-  delay(300);
-}
-
