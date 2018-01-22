@@ -1,19 +1,27 @@
-/*******************ULTRASONS HC-SR04*************************
-   Démonstration de l'utilisation du module à  ultrasons HC-SR04
-   avec un ATTiny.  3 LEDs (rouge, jaune, verte) indiquent si
-   l'obstacle est loin ou proche.
-   http://electroniqueamateur.blogspot.com
- **************************************************************/
+# attiny-i2c-sr04.ino
+# by Francois Belleau
 
-// http://electroniqueamateur.blogspot.ca/2017/10/telemetre-hc-sr04-et-attiny85.html
+// Code for the ATtiny85
 
-// const sr04
+//const i2c
+#define I2C_SLAVE_ADDRESS 0x4 // Address of the slave
+ 
+#include <TinyWireS.h>
+
+//const sr04
 const int trigPin = 3;  // pin "trig" branchée à la broche 2 de l'ATTiny85
-const int echoPin = 4;  //pin "echo" branchée à la broche 3 de l'ATTiny85
-const int LED = 0; // LED rouge branchée à la broche 7 de l'ATTiny85
+const int echoPin = 4;  // pin "echo" branchée à la broche 3 de l'ATTiny85
+const int LED = 0;      // LED rouge branchée à la broche 7 de l'ATTiny85
 
-void setup() {
-
+int i=0;
+int distance;
+   
+void setup()
+{
+//setup i2c
+TinyWireS.begin(I2C_SLAVE_ADDRESS); // join i2c network
+    TinyWireS.onRequest(requestEvent);
+ 
 // setup sr04
   pinMode(echoPin, INPUT);
   pinMode(trigPin, OUTPUT);
@@ -38,15 +46,15 @@ long sr04 ()
 
 void loop()
 {
-  long distance;
-
+  TinyWireS_stop_check();
+  
   distance = sr04();
-
-  if (distance <= 30) {
-    digitalWrite(LED, HIGH);
-    delay(distance * 10);
-    digitalWrite(LED, LOW);
-    delay(distance * 10);
-  }
-
+}
+ 
+// Gets called when the ATtiny receives an i2c request
+void requestEvent()
+{
+    TinyWireS.send(distance);
+    //distance ++;
+    
 }
