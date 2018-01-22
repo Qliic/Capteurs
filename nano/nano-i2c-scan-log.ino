@@ -1,5 +1,6 @@
-# nano-i2c-scan-log.ino
-# by Francois Belleau
+// nano-i2c-scan-log.ino
+// by Francois Belleau
+
 #include <Wire.h>
 
 //lcd include
@@ -11,7 +12,7 @@ LiquidCrystal_I2C lcd(0x27,16,2);  // set the LCD address to 0x27 for a 16 chars
 Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_2_4MS, TCS34725_GAIN_1X);
 
 #include <Servo.h>
-Servo servo;
+Servo servo1, servo2, servo3;
 int servo_pos;
 
 int rg,gg,bg;
@@ -27,6 +28,8 @@ boolean mpu6050 = false;
 boolean attiny85_4 = false;
 boolean tcs34725 = false;
 boolean hmc5883 = false;
+int capteurNombre = 0;
+int val1, val2, val3;
 
 void detect_I2C() {
   
@@ -52,47 +55,52 @@ void detect_I2C() {
       if (address == 0x04) {
         Serial.println("@ ATtiny85-SR04");
         sr04 = true;
-        lcd.clear();
-        lcd.print("ATtiny85-SR04");
+        lcd.setCursor(0,0);
+        lcd.print("ATtiny85-SR04       ");
         delay(1000);
+        capteurNombre ++;
       }
       
       if (address == 0x05) {
         Serial.println("@ ATtiny85-analog10k");
         analog10k = true;
-        lcd.clear();
-        lcd.print("ATtiny85-analog10k");
+        lcd.setCursor(0,0);
+        lcd.print("ATtiny85-analog10k        ");
         delay(1000);
+        capteurNombre ++;
       }
       
       if (address == 0x1E) {
         Serial.println("@ magnetometre-HMC5883");
         hmc5883 = true;
-        lcd.clear();
-        lcd.print("magnetometre-HMC5883");
+        lcd.setCursor(0,0);
+        lcd.print("magnetometre-HMC5883"        );
         delay(1000);
+        capteurNombre ++;
       }
       
       if (address == 0x27) {
         Serial.println("@ ecran-LCD1602");
-        lcd.clear();
-        lcd.print("ecran-LCD1602");
+        lcd.setCursor(0,0);
+        lcd.print("ecran-LCD1602               ");
         delay(1000);
       }
       
       if (address == 0x29) {
         Serial.println("@ couleur-TCS34725");
         tcs34725 = true;
-        lcd.clear();
-        lcd.print("couleur-TCS34725");
+        lcd.setCursor(0,0);
+        lcd.print("couleur-TCS34725        ");
+        capteurNombre ++;
         delay(1000);
       }
       
       if (address == 0x68) {
         Serial.println("@ gyroscope-MPU6050");
         mpu6050 = true;
-        lcd.clear();
-        lcd.print("gyroscope-MPU6050");
+        lcd.setCursor(0,0);
+        lcd.print("gyroscope-MPU6050        ");
+        capteurNombre ++;
         delay(1000);
       }
       
@@ -108,6 +116,12 @@ void detect_I2C() {
     Serial.println("No I2C devices found");
 
   Serial.println("");
+  lcd.setCursor(0,0);
+  //lcd.print("1234567890123456");
+  lcd.print("                ");
+  lcd.setCursor(0,1);
+  //lcd.print("1234567890123456");
+  lcd.print("                ");
 }
 
 String read_tcs34725() {
@@ -171,8 +185,16 @@ String read_mpu6050() {
 
   int degre = map((AcZ/128),-140,140,20,160);
   
-  snprintf (json, 200, "x:%i y:%i z:%i", AcX/128, AcY/128, AcZ/128);
-  //Serial.println(json);
+  snprintf (json, 200, "x:%i y:%i z:%i             ", AcX/128, AcY/128, AcZ/128);
+  val1 = map(AcX/128,-128,128,1,100);
+  val2 = map(AcY/128,-128,128,1,100);
+  val3 = map(AcZ/128,-128,128,1,100);
+
+  //snprintf (json, 200, "x:%i y:%i z:%i", GyX/128, GyY/128, GyZ/128);
+  //val1 = map(GyX/128,-128,128,1,100);
+  //val2 = map(GyY/128,-128,128,1,100);
+  //val3 = map(GyZ/128,-128,128,1,100);
+//Serial.println(json);
 
   //servo_pos = degre;
   //Serial.println(servo_pos);
@@ -237,7 +259,11 @@ String read_hmc5883(){
   //Serial.println(servo_pos);
 
   char buf[80];
-  sprintf(buf,"D:%i",(int) degre);
+  sprintf(buf,"Degre:%i   ",(int) degre);
+  val1 = map(degre,1,360,1,100);
+  val2 = val1;
+  val3 = val1;
+  
   return buf;
 
 }
@@ -258,7 +284,9 @@ void read() {
 
 void setup() {
 // servo setup
-  servo.attach(5);
+  servo1.attach(9);
+  servo2.attach(10);
+  servo3.attach(11);
   
 // ws2812 setup
   pixels.begin();
@@ -310,22 +338,19 @@ void loop() {
 if (hmc5883) {
   read_string = read_hmc5883();
 
-  servo.write(servo_pos);
-  delay(15);
-
   Serial.println(read_string);
-  lcd.clear();
+  lcd.setCursor(0,0);
   lcd.print(read_string);
-  delay(1000);
+  if (capteurNombre > 1) {delay(1000);} else {delay(300);}
 }
 
 if (tcs34725) {
   read_string = read_tcs34725();
 
   Serial.println(read_string);
-  lcd.clear();
+  lcd.setCursor(0,0);
   lcd.print(read_string);
-  delay(1000);
+  if (capteurNombre > 1) {delay(1000);} else {delay(300);}
 
   //pixels.setPixelColor(0, pixels.Color(rg,gg,bg));
   //pixels.show();
@@ -335,13 +360,11 @@ if (tcs34725) {
 if (mpu6050) {
   read_string = read_mpu6050();
 
-  servo.write(servo_pos);
-  delay(15);
-
   Serial.println(read_string);
-  lcd.clear();
+  //lcd.clear();
+  lcd.setCursor(0,0);
   lcd.print(read_string);
-  delay(1000);
+  if (capteurNombre > 1) {delay(1000);} else {delay(300);}
 }
 
 if (sr04) {
@@ -350,13 +373,18 @@ if (sr04) {
   while(Wire.available()) // slave may send less than requested
   {
     distance = Wire.read(); // receive a byte as character
-    sprintf(buffer,"Distance:%i",(int) distance);
+    sprintf(buffer,"Distance:%i    ",(int) distance);
   
     //Serial.println(i); // print the character
     Serial.println(buffer);
-    lcd.clear();
+    lcd.setCursor(0,0);
     lcd.print(buffer);
-    delay(1000);
+  if (capteurNombre > 1) {delay(1000);} else {delay(300);}
+
+  val1 = map(distance,1,150,1,100);
+  val2 = val1;
+  val3 = val1;
+  
   }
 }
       
@@ -366,15 +394,23 @@ if (analog10k) {
   while(Wire.available()) // slave may send less than requested
   {
     distance = Wire.read(); // receive a byte as character
-    sprintf(buffer,"Valeur:%i",(int) distance);
+    sprintf(buffer,"Valeur:%i    ",(int) distance);
   
     //Serial.println(i); // print the character
     Serial.println(buffer);
-    lcd.clear();
+    lcd.setCursor(0,0);
     lcd.print(buffer);
-    delay(1000);
+  if (capteurNombre > 1) {delay(1000);} else {delay(300);}
+
+  val1 = map(distance,1,150,1,100);
+  val2 = val1;
+  val3 = val1;
   }   
 }
 
+  //modifier servo;
+  servo1.write(map(val1,1,100,1,180));
+  servo2.write(map(val2,1,100,1,180));
+  servo3.write(map(val3,1,100,1,180));
 }
 
